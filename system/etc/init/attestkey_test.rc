@@ -1,0 +1,8 @@
+service attestkey_test /vendor/bin/attestkey_test
+    user system
+    group system
+    oneshot
+    disable
+
+on property:sys.boot_completed=1
+    start attestkey_test

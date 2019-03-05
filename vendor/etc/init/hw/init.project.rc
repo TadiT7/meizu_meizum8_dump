@@ -1,0 +1,179 @@
+# MTK project .rc configure
+
+import init.mt6765.usb.rc
+
+on init
+    mkdir /mnt/media_rw/usbotg 0700 media_rw media_rw
+    mkdir /storage/usbotg 0700 root root
+
+on post-fs-data
+
+#accdet
+    chown system system /sys/class/meizu/accdet_calibration/cmd
+    chown system system /sys/class/meizu/accdet_calibration/data
+    chown system system /sys/class/meizu/accdet_calibration/state
+#Camera
+    chmod 0660 /dev/MAINAF
+    chown system camera /dev/MAINAF
+
+    chmod 0660 /dev/MAINAF2
+    chown system camera /dev/MAINAF2
+
+    chmod 0660 /dev/SUBAF
+    chown system camera /dev/SUBAF
+
+    chmod 0660 /dev/GAF001AF
+    chown system camera /dev/GAF001AF
+
+    chmod 0660 /dev/DW9714AF
+    chown system camera /dev/DW9714AF
+
+    #wingtech.malp add for cameraflashlight begin
+    chmod 0664 /sys/class/flashlightdrv/kd_camera_flashlight/flash1
+    chown cameraserver system /sys/class/flashlightdrv/kd_camera_flashlight/flash1
+    chmod 0664 /sys/class/flashlightdrv/kd_camera_flashlight/flash2
+    chown cameraserver system /sys/class/flashlightdrv/kd_camera_flashlight/flash2
+    chmod 0664 /sys/class/flashlightdrv/kd_camera_flashlight/flash3
+    chown cameraserver system /sys/class/flashlightdrv/kd_camera_flashlight/flash3
+    chown system system /sys/class/meizu/cam_thermal/ap_temp
+    chown system system /sys/class/meizu/cam_thermal/status
+    #wingtech.malp add for cameraflashlight end
+
+    #start add for  dual camera cal  by allenyao
+    chmod 0666 /sys/class/dual_camera/dual_camera_cal/dual_camera_cal
+    chown cameraserver system /sys/class/dual_camera/dual_camera_cal/dual_camera_cal
+    #end add for dual camera cal  by allenyao
+
+    chmod 0660 /dev/LC898212AF
+    chown system camera /dev/LC898212AF
+
+    chmod 0660 /dev/BU64745GWZAF
+    chown system camera /dev/BU64745GWZAF
+
+#SMB
+    chown system system /proc/smb/ScreenComm
+    chmod 0660 /proc/smb/ScreenComm
+
+    chmod 0660 /dev/spm
+    chown system system /dev/spm
+
+#RunInTestii
+    chmod 0775 /vendor/bin/memtester
+    chown system system /vendor/bin/memtester
+#Gesture permission zengxin@flyme.sensor {@
+    chown system system /sys/class/meizu/tp/gesture_control
+    chmod 0660 /sys/class/meizu/tp/gesture_control
+# @}
+
+    #acc calibration.
+    chmod 0664 /sys/class/meizu/acc/acc_calibration
+    chown system system /sys/class/meizu/acc/acc_calibration
+
+    chmod 0664 /sys/class/meizu/acc/acc_x_offset
+    chown system system /sys/class/meizu/acc/acc_x_offset
+
+    chmod 0664 /sys/class/meizu/acc/acc_x_calibbias
+    chown system system /sys/class/meizu/acc/acc_x_calibbias
+
+    chmod 0664 /sys/class/meizu/acc/acc_y_offset
+    chown system system /sys/class/meizu/acc/acc_y_offset
+
+    chmod 0664 /sys/class/meizu/acc/acc_y_calibbias
+    chown system system /sys/class/meizu/acc/acc_y_calibbias
+
+    chmod 0664 /sys/class/meizu/acc/acc_z_offset
+    chown system system /sys/class/meizu/acc/acc_z_offset
+
+    chmod 0664 /sys/class/meizu/acc/acc_z_calibbias
+    chown system system /sys/class/meizu/acc/acc_z_calibbias
+
+    #ps calibration.
+    chmod 0664 /sys/class/meizu/ps/ps_calibration
+    chown system system /sys/class/meizu/ps/ps_calibration
+
+    chmod 0664 /sys/class/meizu/ps/ps_offset
+    chown system system /sys/class/meizu/ps/ps_offset
+
+    chmod 0664 /sys/class/meizu/ps/ps_calibbias
+    chown system system /sys/class/meizu/ps/ps_calibbias
+
+
+on init
+    # Refer to http://source.android.com/devices/tech/storage/index.html
+    # It said, "Starting in Android 4.4, multiple external storage devices are surfaced to developers through
+    #           Context.getExternalFilesDirs(), Context.getExternalCacheDirs(), and Context.getObbDirs().
+    #           External storage devices surfaced through these APIs must be a semi-permanent part of the device (such as an SD card slot in a battery compartment).
+    #           Developers expect data stored in these locations to be available over long periods of time."
+    # Therefore, if the target doesn't support sd hot-plugging (Ex: the SD card slot in a battery compartment), we need to export SECONDARY_STORAGE in 'boot' section
+    #
+    # export SECONDARY_STORAGE /storage/sdcard1
+
+service fuse_usbotg /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/usbotg /storage/usbotg
+    class late_start
+    disabled
+
+service spm_script /vendor/bin/spm_loader
+    user system
+    group system
+    class core
+    oneshot
+
+# Add goodix fingerprint start
+on fs
+    chown system system /dev/goodix_fp
+    chmod 0666 /dev/goodix_fp
+# Add goodix fingerprint end
+
+# Add sunwave fingerprint start
+on fs
+    chown system system /dev/sunwave_fp
+    chmod 0666 /dev/sunwave_fp
+# Add sunwave fingerprint end
+
+# FLYME:wanglong@Telecom.TeleService.Feature#636837 {@
+   chmod 0666 /sys/bus/msm_subsys/devices/subsys4/restart_level
+#
+
+#FLYME:liujianfeng@feature for tool of ap&cp log{@
+service logkit /system/bin/logkit /data/media/0/Android/log/  50  0
+    class late_start
+    user root
+    group log system
+    socket logkit stream 666 system system
+    disabled
+    oneshot
+
+service stop_logkit /system/bin/logkit -k /data/media/0/Android/log/
+    class late_start
+    user root
+    group system log
+    socket logkit stream 666 system system
+    disabled
+    oneshot
+
+on property:persist.radio.aplog=1
+    start logkit
+on property:persist.radio.aplog=0
+    start stop_logkit
+
+service diag_mdlog /system/bin/diag_mdlog -f /sdcard/DiagFromAssets.cfg -o /data/media/0/diag_logs -s 500 -n 200 -w /data/media/0/diag_logs
+    class late_start
+    user root
+    group log system qcom_diag sdcard_rw sdcard_r media_rw
+    disabled
+    oneshot #for running only once
+
+service dm_stop /system/bin/diag_mdlog -k
+    class late_start
+    user root
+    group log system qcom_diag sdcard_rw sdcard_r media_rw
+    disabled
+    oneshot #for running only once
+
+on property:persist.sys.diag.cmd=2
+    start diag_mdlog
+
+on property:persist.sys.diag.cmd=1
+    start dm_stop
+    setprop persist.sys.diag.cmd 0
+# @}
